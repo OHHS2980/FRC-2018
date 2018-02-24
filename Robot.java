@@ -10,6 +10,7 @@ package org.usfirst.frc.team2980.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.Timer;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Ultrasonic;
@@ -50,7 +52,10 @@ public class Robot extends IterativeRobot {
 	private static boolean ranAuto = false;
 	private static String autoSelect = "";
 	private static double power = 0;
-	
+	private static boolean grippyState = false;
+	private static boolean pushyState = false;
+	private static boolean button1 = false;
+	private static boolean button2 = false;
 	/*
 	private static final int IMG_WIDTH = 320;
 	private static final int IMG_HEIGHT = 240;
@@ -66,7 +71,9 @@ public class Robot extends IterativeRobot {
 	WPI_TalonSRX frontLeftDrive = new WPI_TalonSRX(6);
 	WPI_TalonSRX backRightSlave = new WPI_TalonSRX(9);
 	WPI_TalonSRX backLeftSlave = new WPI_TalonSRX(7);	
-
+	
+	//PowerDistributionPanel pdb = new PowerDistributionPanel();
+	//Compressor compressor = new Compressor(0);
 	Encoder encoder = new Encoder(0,1,true,EncodingType.k4X);
 	AnalogInput dial = new AnalogInput(0);
 	
@@ -75,7 +82,8 @@ public class Robot extends IterativeRobot {
 
 	WPI_TalonSRX Winch = new WPI_TalonSRX(4);
 
-	WPI_TalonSRX lifter = new WPI_TalonSRX(5);
+	WPI_TalonSRX lifter1 = new WPI_TalonSRX(5);
+	WPI_TalonSRX lifter2 = new WPI_TalonSRX(10);
 	
 	ADXRS450_Gyro gyro = new ADXRS450_Gyro();
 	
@@ -107,7 +115,9 @@ public class Robot extends IterativeRobot {
     	backRightSlave.follow(frontRightDrive);
     	backLeftSlave.follow(frontLeftDrive);
     	intakeLeft.follow(intakeRight);
+    	lifter2.follow(lifter1);
     	
+    	LED.set(0.45);
     	
     	CameraServer.getInstance().startAutomaticCapture();
     	/*
@@ -227,6 +237,9 @@ public class Robot extends IterativeRobot {
 			}
 		}
 		
+		if(m_timer.get() == 13) {
+	    	LED.set(-0.11);
+		}
     	SmartDashboard.putNumber("Gyro", gyro.getAngle());
     	SmartDashboard.putNumber("Drive", frontLeftDrive.get());
     	//SmartDashboard.putNumber("Accel(g)", accel.getX());
@@ -252,6 +265,9 @@ public class Robot extends IterativeRobot {
 		gyro.reset();
 		encoder.reset();
 		m_timer.start();
+    	LED.set(0.45);
+    	Grippy.set(false);
+    	Pushy.set(false);
 	}
 
 	/**
@@ -261,37 +277,80 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		//Driving
 		double forward = m_Stick.getY(); // logitech gampad left X, positive is forward
-    	double turn = m_Stick.getX()*0.65; //logitech gampad right X, positive means turn right
+    	double turn = m_Stick.getZ()*0.88; //logitech gampad right X, positive means turn right
     	
-    	power += (forward-power)*0.5;
+    	power += (forward-power)*0.85;
     	
-    	m_robotDrive.arcadeDrive(-power, turn);
+    	m_robotDrive.arcadeDrive(-power, -turn);
     	
     	//Pneumatics
     	
-    	Grippy.set(m_Stick.getRawButton(1));
-    	Pushy.set(m_Stick.getRawButton(2));
+    	if(m_Stick.getRawButton(1)&&!button1)
+    	{
+    		grippyState = !grippyState;
+    	}
+    	if(m_Stick.getRawButton(2)&&!button2)
+    	{
+    		pushyState = !pushyState;
+    	}
+    	Grippy.set(grippyState);
+    	Pushy.set(pushyState);
     	
-    	//Lifter
+    	button1 = m_Stick.getRawButton(1);
+    	button2 = m_Stick.getRawButton(2);
+    	
+    	//Grippy.set(m_Stick.getRawButton(1));
+    	//Pushy.set(m_Stick.getRawButton(2));
+    	
+    	//lifter1
     	
     	if(m_Stick.getRawButton(5)) {
-    		lifter.set(1.0);
+    		lifter1.set(1.0);
     	}
     	else if(m_Stick.getRawButton(7)) {
-    		lifter.set(-0.5);
+    		lifter1.set(-0.5);
     	}
     	else {
-    		lifter.set(0);
+    		lifter1.set(0);
     	}
     	
     	//Intake
 
-    	if(m_Stick.getRawButton(3)) {
+    	if(m_Stick.getRawButton(4)) {
     		intakeRight.set(1);
     	}
-    	else if (m_Stick.getRawButton(4)) {
+    	else if (m_Stick.getRawButton(3)) {
     		intakeRight.set(-1);
     	}
+    	else {
+    		intakeRight.stopMotor();
+    	}
+    	
+    	if(m_Stick.getRawButton(6)) {
+    		Winch.set(1);
+    	}
+    	else if (m_Stick.getRawButton(8)) {
+    		Winch.set(-1);
+    	}
+    	else {
+    		Winch.set(0);
+    	}
+    	
+    	if( m_timer.get() == 105 ) {
+        	LED.set(-0.11);
+    	}
+    	else if (m_timer.get() > 107) {
+    		LED.set(0.65);
+    	}
+    	/*
+    	if(pdb.getVoltage()<10) {
+    		compressor.setClosedLoopControl(false);
+    	}
+    	else {
+    		compressor.setClosedLoopControl(true);
+    	}
+    */
+    	
     	
     	SmartDashboard.putNumber("Gyro", gyro.getAngle());
     	SmartDashboard.putNumber("Accel", accel.getX());
@@ -301,6 +360,9 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("Distance(inches)", encoder.get());
     	SmartDashboard.putNumber("dial", dial.getAverageVoltage());
     	SmartDashboard.putNumber("drive", power);
+    	SmartDashboard.putBoolean("grippyState", grippyState);
+    	SmartDashboard.putBoolean("pushyState", pushyState);
+    	//SmartDashboard.putNumber("Voltage",pdb.getVoltage());
     	//Encoder ticks = (360 / circumference) * Distance to travel
     	
 	}
