@@ -23,11 +23,9 @@ import org.opencv.imgproc.Imgproc;
 
 import com.ctre.phoenix. motorcontrol.can.*;
 
-import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
-import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -57,24 +55,12 @@ public class Robot extends IterativeRobot {
 	private static boolean button2 = false;
 	private static boolean hasRunAuto =  false;
 	private static String gameData = "";
-	/*
-	private static final int IMG_WIDTH = 320;
-	private static final int IMG_HEIGHT = 240;
-	
-	private VisionThread visionThread;
-	private double centerX = 0.0;
-	private Pipeline myPipeline = new Pipeline();
-	
-	private final Object imgLock = new Object();
-	*/
 	
 	WPI_TalonSRX frontRightDrive = new WPI_TalonSRX(8);
 	WPI_TalonSRX frontLeftDrive = new WPI_TalonSRX(6);
 	WPI_TalonSRX backRightSlave = new WPI_TalonSRX(9);
 	WPI_TalonSRX backLeftSlave = new WPI_TalonSRX(7);	
 	
-	//PowerDistributionPanel pdb = new PowerDistributionPanel();
-	//Compressor compressor = new Compressor(0);
 	Encoder encoder = new Encoder(0,1,true,EncodingType.k4X);
 	AnalogInput dial = new AnalogInput(0);
 	
@@ -96,7 +82,7 @@ public class Robot extends IterativeRobot {
 	Spark LED = new Spark(0);
 	
 	//limit switch that returns true if the lifter is all the way extended
-	DigitalInput liftLimit = new DigitalInput(8);
+	//DigitalInput liftLimit = new DigitalInput(8);
 	
 	private DifferentialDrive m_robotDrive
 			= new DifferentialDrive(frontLeftDrive, frontRightDrive);
@@ -122,9 +108,7 @@ public class Robot extends IterativeRobot {
     	lifter2.follow(lifter1);
     	
     	LED.set(0.45);
-    	
-    	CameraServer.getInstance().startAutomaticCapture();
-    	
+    	    	
 		gyro.reset();
 		gyro.calibrate();
 		gyro.reset();
@@ -171,7 +155,7 @@ public class Robot extends IterativeRobot {
 		double turningValue = 0;
 		if(!hasRunAuto) {
 			if(autoSelect.equals("line")||gameData == "") {
-				while(encoder.getDistance()<150&&m_timer.get()<15) {
+				while(encoder.getDistance()<150&&m_timer.get()<14.7) {
 					//keeps the robot driving straight
 					turningValue = (0-gyro.getAngle()) * kP;
 					turningValue = makeReasonable(turningValue, 0.5);
@@ -188,7 +172,7 @@ public class Robot extends IterativeRobot {
 			if(autoSelect.equals("switchR")) {
 				
 				//makes the robot drive forward until it reaches a certain distance
-				while(encoder.getDistance()<161&&m_timer.get()<15) {
+				while(encoder.getDistance()<190&&m_timer.get()<14.7) {
 					//keeps the robot driving straight
 					turningValue = (0-gyro.getAngle()) * kP;
 					turningValue = makeReasonable(turningValue, 0.5);
@@ -204,10 +188,11 @@ public class Robot extends IterativeRobot {
 				}
 				
 				//turns left
-				while(m_timer.get()<15&&gyro.getAngle()<-90.5 || gyro.getAngle()>-85.5) {
+				while(m_timer.get()<14.7&&(gyro.getAngle()<-90.5 || gyro.getAngle()>-88.5)) {
 					turningValue = (-90+gyro.getAngle()) * 0.012;
-					turningValue = makeReasonable(turningValue, 0.61);
+					turningValue = makeReasonable(turningValue, 0.60);
 					m_robotDrive.arcadeDrive(0.0, -turningValue);
+					dataOutput();
 				}
 				encoder.reset();
 				
@@ -215,7 +200,7 @@ public class Robot extends IterativeRobot {
 				
 				//SWITCH ON OTHER SIDE (Drives more)
 				if(gameData.charAt(0)=='L') {
-					while(encoder.getDistance()<70&&m_timer.get()<15)
+					while(encoder.getDistance()<135&&m_timer.get()<14.7)
 					{
 						m_robotDrive.arcadeDrive(-0.67, 0);
 					}
@@ -223,7 +208,7 @@ public class Robot extends IterativeRobot {
 				
 				//SWITCH ON OUR SIDE (Drives less)
 				else{
-					while(encoder.getDistance()<33&&m_timer.get()<15)
+					while(encoder.getDistance()<33&&m_timer.get()<14.7)
 					{
 						m_robotDrive.arcadeDrive(-0.67, 0);
 					}
@@ -231,11 +216,11 @@ public class Robot extends IterativeRobot {
 				
 				
 				
-				//Turns to face switch
+				//Turns(left) to face switch
 				gyro.reset();
-				while(m_timer.get()<15&&gyro.getAngle()<-90.5 || gyro.getAngle()>-85.5) {
+				while(m_timer.get()<14.7&&(gyro.getAngle()<-90.5 || gyro.getAngle()>-88.5)) {
 					turningValue = (-90+gyro.getAngle()) * 0.012;
-					turningValue = makeReasonable(turningValue, 0.61);
+					turningValue = makeReasonable(turningValue, 0.60);
 					m_robotDrive.arcadeDrive(0.0, -turningValue);
 				}
 				encoder.reset();
@@ -324,10 +309,6 @@ public class Robot extends IterativeRobot {
 					intakeRight.set(1);
 			    	dataOutput();
 				}
-				
-				
-				
-			
 			}
 			
 			
@@ -337,7 +318,7 @@ public class Robot extends IterativeRobot {
 			{
 
 				//makes the robot drive forward until it reaches a certain distance
-				while(encoder.getDistance()<186&&m_timer.get()<15) {
+				while(encoder.getDistance()<190&&m_timer.get()<14.7) {
 					//keeps the robot driving straight
 					turningValue = (0-gyro.getAngle()) * kP;
 					turningValue = makeReasonable(turningValue, 0.5);
@@ -353,10 +334,11 @@ public class Robot extends IterativeRobot {
 				}
 				
 				//turns right
-				while(m_timer.get()<15&&gyro.getAngle()>90.5 || gyro.getAngle()<82.5) {
+				while(m_timer.get()<14.7&&(gyro.getAngle()>90.5 || gyro.getAngle()<82.5)) {
 					turningValue = (90+gyro.getAngle()) * 0.012;
 					turningValue = makeReasonable(turningValue, 0.60);
 					m_robotDrive.arcadeDrive(0.0, -turningValue);
+					dataOutput();
 				}
 				encoder.reset();
 				
@@ -364,7 +346,7 @@ public class Robot extends IterativeRobot {
 				
 				//SWITCH ON OTHER SIDE (Drives more)
 				if(gameData.charAt(0)=='R') {
-					while(encoder.getDistance()<135&&m_timer.get()<15)
+					while(encoder.getDistance()<135&&m_timer.get()<14.7)
 					{
 						m_robotDrive.arcadeDrive(-0.67, 0);
 					}
@@ -372,7 +354,7 @@ public class Robot extends IterativeRobot {
 				
 				//SWITCH ON OUR SIDE (Drives less)
 				else{
-					while(encoder.getDistance()<33&&m_timer.get()<15)
+					while(encoder.getDistance()<33&&m_timer.get()<14.7)
 					{
 						m_robotDrive.arcadeDrive(-0.67, 0);
 					}
@@ -382,7 +364,7 @@ public class Robot extends IterativeRobot {
 				
 				//Turns(right) to face switch
 				gyro.reset();
-				while(m_timer.get()<15&&gyro.getAngle()>90.5 || gyro.getAngle()<82.5) {
+				while(m_timer.get()<14.7&&(gyro.getAngle()>90.5 || gyro.getAngle()<82.5)) {
 					turningValue = (90+gyro.getAngle()) * 0.012;
 					turningValue = makeReasonable(turningValue, 0.60);
 					m_robotDrive.arcadeDrive(0.0, -turningValue);
@@ -452,13 +434,8 @@ public class Robot extends IterativeRobot {
 				timer = m_timer.get();
 				while(m_timer.get()-timer<2 && m_timer.get()<14.7) {
 					lifter1.set(1.0);
-					//drive forward as lifter lifts
-					//m_robotDrive.arcadeDrive(-0.5, 0.0);
 				}
 				lifter1.set(0);
-
-				SmartDashboard.putNumber("Timer Diff", m_timer.get()-timer);
-		    	dataOutput();	
 		    	
 		    	//push out before we eject the cube
 		    	timer = m_timer.get();
@@ -476,20 +453,8 @@ public class Robot extends IterativeRobot {
 
 			}
 			
-			
-			//if(autoblahblah)
-			//{
-				
-			//}
-			
 		}
-    	hasRunAuto = true;
-    	m_robotDrive.stopMotor();	
-    	pushy.set(false);
-		//grippy.set(true);
-		lifter1.stopMotor();
-		intakeRight.set(0);
-    	dataOutput();
+    	hasRunAuto = true;    	
 	}
 
 	/**
@@ -497,15 +462,10 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopInit() {
+		power = 0;
 		move = 0;
-		velocity = 0;
 		m_timer.reset();
-		gyro.reset();
-		encoder.reset();
 		m_timer.start();
-    	LED.set(0.45);
-    	grippy.set(false);
-    	pushy.set(false);
 	}
 
 	/**
@@ -543,7 +503,7 @@ public class Robot extends IterativeRobot {
     	
     	//lifters
     	//raise the lifter
-    	if(m_Stick.getRawButton(5)&&!liftLimit.get()) {
+    	if(m_Stick.getRawButton(5)) {
     		lifter1.set(1.0);
     	}
     	//lower the lifter
@@ -576,20 +536,20 @@ public class Robot extends IterativeRobot {
     	else {
     		Winch.set(0);
     	}
-    	
+    	/*
     	if( m_timer.get() == 105 ) {
         	LED.set(-0.11);
     	}
     	else if (m_timer.get() > 107) {
     		LED.set(0.65);
     	}  
-    	
-    	
+    	*/
+    	/*
     	dataOutput();
     	SmartDashboard.putNumber("drive", power);
     	SmartDashboard.putBoolean("grippyState", grippyState);
     	SmartDashboard.putBoolean("pushyState", pushyState);
-    	
+    	*/
 	}
 
 	/**
@@ -608,7 +568,7 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("Encoder", encoder.get());
     	SmartDashboard.putNumber("Timer", m_timer.get());
     	SmartDashboard.putNumber("dial", dial.getAverageVoltage());
-    	SmartDashboard.putBoolean("liftLimit", liftLimit.get());
+    	//SmartDashboard.putBoolean("liftLimit", liftLimit.get());
 	}
 	//d is the value to be made reasonable, e is the absolute deviation from 0
 	public double makeReasonable(double d, double e) {
