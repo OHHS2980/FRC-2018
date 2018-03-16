@@ -67,7 +67,7 @@ public class Robot extends IterativeRobot {
 	WPI_TalonSRX intakeLeft = new WPI_TalonSRX(2);
 	WPI_TalonSRX intakeRight = new WPI_TalonSRX(3);
 
-	WPI_TalonSRX Winch = new WPI_TalonSRX(4);
+	WPI_TalonSRX winch = new WPI_TalonSRX(4);
 
 	WPI_TalonSRX lifter1 = new WPI_TalonSRX(5);
 	WPI_TalonSRX lifter2 = new WPI_TalonSRX(10);
@@ -379,72 +379,35 @@ public class Robot extends IterativeRobot {
     	//Pneumatics
     	/*toggles states of grippy and pushy solenoids by checking if the status of the button 
     	is true when the previous state was false*/
-    	if(m_Stick.getRawButton(1)&&!button1)
-    	{
-    		grippyState = !grippyState;
-    	}
-    	if(m_Stick.getRawButton(2)&&!button2)
-    	{
-    		pushyState = !pushyState;
-    	}
-    	//sets state of solenoids based on toggle
-    	grippy.set(grippyState);
-    	pushy.set(pushyState);
+    	toggleButton(pushy, 1, button1, grippyState);
+    	toggleButton(grippy, 2, button2, pushyState);
     	
     	//stores values of buttons for toggle system
     	button1 = m_Stick.getRawButton(1);
     	button2 = m_Stick.getRawButton(2);
  
+    	//lifter : 5 raise, 7 lower
+    	checkButton(lifter1, 5, 7, 1, -.5);
     	
-    	//lifters
-    	//raise the lifter
-    	if(m_Stick.getRawButton(5)) {
-    		lifter1.set(1.0);
-    	}
-    	//lower the lifter
-    	else if(m_Stick.getRawButton(7)) {
-    		lifter1.set(-0.5);
-    	}
-    	else {
-    		lifter1.stopMotor();
-    	}
+    	//intake : 4 intake, 3 outtake
+    	checkButton(intakeRight, 4, 3, 1, -1);
     	
-    	//Intake
-    	//draw into robot
-    	if(m_Stick.getRawButton(4)) {
-    		intakeRight.set(1);
-    	}
-    	//push out of robot
-    	else if (m_Stick.getRawButton(3)) {
-    		intakeRight.set(-1);
-    	}
-    	else {
-    		intakeRight.stopMotor();
-    	}
+    	//climber winch : 6 up, 8 down
+    	checkButton(winch, 6, 8, 1, -1);
+
     	
-    	if(m_Stick.getRawButton(6)) {
-    		Winch.set(1); //climb up
-    	}
-    	else if (m_Stick.getRawButton(8)) {
-    		Winch.set(-1); //descend
-    	}
-    	else {
-    		Winch.set(0);
-    	}
-    	/*
     	if( m_timer.get() == 105 ) {
         	LED.set(-0.11);
     	}
     	else if (m_timer.get() > 107) {
     		LED.set(0.65);
     	}  
-    	*/
-    	/*
+    	
     	dataOutput();
     	SmartDashboard.putNumber("drive", power);
     	SmartDashboard.putBoolean("grippyState", grippyState);
     	SmartDashboard.putBoolean("pushyState", pushyState);
-    	*/
+    	
 	}
 
 	/**
@@ -521,6 +484,35 @@ public class Robot extends IterativeRobot {
 		//setting up to grab next cube
 		grippy.set(true);
 		pushy.set(true);
+	}
+	
+	private void checkButton(WPI_TalonSRX motor, int button1, int button2, double power1, double power2)
+	{
+		if(m_Stick.getRawButton(button1)) {
+    		intakeRight.set(power1);
+    	}
+    	//push out of robot
+    	else if (m_Stick.getRawButton(button2)) {
+    		intakeRight.set(power2);
+    	}
+    	else {
+    		intakeRight.stopMotor();
+    	}
+	}
+	
+	private void toggleButton(Solenoid s, int button, boolean toggle, boolean on)
+	{
+		if(m_Stick.getRawButton(button)&&!toggle)
+    	{
+    		on = !on;
+    	}
+
+    	//sets state of solenoids based on toggle
+    	s.set(on);
+
+    	//stores values of buttons for toggle system
+    	toggle = m_Stick.getRawButton(button);
+
 	}
 	
 }
