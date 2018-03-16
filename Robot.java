@@ -239,7 +239,7 @@ public class Robot extends IterativeRobot {
 				//(repeat of above code)
 				//lifts and spits cube
 				
-				// raises lifter for ? seconds
+				//raises lifter for ? seconds
 				timer = m_timer.get();
 				while(m_timer.get()-timer < 2 && m_timer.get() < 14.7) {
 					lifter1.set(1.0);
